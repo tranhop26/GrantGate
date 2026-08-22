@@ -1,1 +1,13 @@
 .worktrees/
+.env
+.env.local
+node_modules/
+dist/
+coverage/
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+.vercel/
+work/
+deployments/*.local.json
