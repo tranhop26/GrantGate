@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install genvm-linter==0.11.0 pytest
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint:web
+      - run: genvm-lint check packages/contracts/grantgate.py
+        env:
+          PYTHONUTF8: "1"
+      - run: pnpm test
+      - run: pnpm build

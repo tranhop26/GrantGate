@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "python -m pytest tests -q",
+    "test": "python -m pytest tests -q && node --test scripts/*.test.mjs",
     "lint": "uvx --from genvm-linter genvm-lint check grantgate.py"
   },
   "dependencies": {

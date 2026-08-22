@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const readContract = vi.hoisted(() => vi.fn());
 const writeContract = vi.hoisted(() =>
-  vi.fn(async (_call: { functionName: string; [key: string]: unknown }) => "0xhash"),
+  vi.fn(async (call: { functionName: string; [key: string]: unknown }) => {
+    void call;
+    return "0xhash";
+  }),
 );
 const ensureCorrectChain = vi.hoisted(() => vi.fn(async () => undefined));
 const ensureConsensus = vi.hoisted(() => vi.fn(async () => undefined));
