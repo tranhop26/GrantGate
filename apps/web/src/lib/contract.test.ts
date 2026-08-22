@@ -48,6 +48,15 @@ describe("contract boundary", () => {
     );
   });
 
+  it("reads the sponsor tail beyond the first 50 records", async () => {
+    readContract
+      .mockResolvedValueOnce({ created: 52, assigned: 0, accepted: 0, rejected: 0, unresolved: 0 })
+      .mockResolvedValueOnce([]);
+    const result = await reads.sponsorMilestoneTail(WALLET.address, 50);
+    expect(result.createdCount).toBe(52);
+    expect(readContract).toHaveBeenNthCalledWith(2, expect.objectContaining({ functionName: "get_sponsor_milestones", args: expect.arrayContaining([50, 2]) }));
+  });
+
   it("encodes create_milestone with an address calldata value", async () => {
     await writes.createMilestone(
       WALLET,

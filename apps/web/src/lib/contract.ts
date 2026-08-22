@@ -51,6 +51,18 @@ async function read(functionName: string, args: unknown[]): Promise<unknown> {
   });
 }
 
+async function sponsorMilestoneTail(actor: string, offset: number): Promise<{ createdCount: number; records: Milestone[] }> {
+  if (!Number.isSafeInteger(offset) || offset < 0) throw new Error("Invalid sponsor milestone offset");
+  const actorAddress = address(actor);
+  const stats = parseActorStats(await read("get_actor_stats", [actorAddress]));
+  const records: Milestone[] = [];
+  for (let cursor = offset; cursor < stats.created; cursor += 50) {
+    const limit = Math.min(50, stats.created - cursor);
+    records.push(...parseMilestoneList(await read("get_sponsor_milestones", [actorAddress, cursor, limit])));
+  }
+  return { createdCount: stats.created, records };
+}
+
 export const reads = {
   config: async (): Promise<ContractConfig> => parseContractConfig(await read("get_config", [])),
   milestone: async (milestoneId: number): Promise<Milestone | null> =>
@@ -61,6 +73,7 @@ export const reads = {
     parseMilestoneList(
       await read("get_sponsor_milestones", [address(actor), offset, limit]),
     ),
+  sponsorMilestoneTail,
   builderMilestones: async (actor: string, offset = 0, limit = 50): Promise<Milestone[]> =>
     parseMilestoneList(
       await read("get_builder_milestones", [address(actor), offset, limit]),

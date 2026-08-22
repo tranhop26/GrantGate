@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import type { Milestone } from "@grantgate/shared";
 import { ContractNotice } from "@/components/ContractNotice";
 import { TxTimeline } from "@/components/TxTimeline";
 import { WalletGate } from "@/components/WalletGate";
@@ -16,7 +15,7 @@ export function CreateMilestonePage() {
   const [error, setError] = useState<string | null>(null);
   const [createdId, setCreatedId] = useState<number | null>(null);
   const wallet = useWallet();
-  const tx = useGrantGateTx<Milestone[]>();
+  const tx = useGrantGateTx<Awaited<ReturnType<typeof reads.sponsorMilestoneTail>>>();
   const set = (key: keyof CreateMilestoneInput, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   async function submit(event: FormEvent) {
@@ -26,15 +25,14 @@ export function CreateMilestonePage() {
     try {
       const payload = validateCreateMilestone(form);
       if (!wallet.address) throw new Error("Connect a wallet first.");
-      const before = await reads.sponsorMilestones(wallet.address);
-      const beforeIds = new Set(before.map((record) => record.id));
+      const before = await reads.actorStats(wallet.address);
       const result = await tx.mutateAsync({
         send: (wallet) => writes.createMilestone(wallet, payload.title, payload.builder, payload.owner, payload.repo, payload.criteria, payload.deadline),
-        readback: () => reads.sponsorMilestones(wallet.address!),
-        verifyReadback: (records) => findCreatedMilestone(records, beforeIds, wallet.address!, payload) !== null,
+        readback: () => reads.sponsorMilestoneTail(wallet.address!, before.created),
+        verifyReadback: (readback) => readback.createdCount > before.created && findCreatedMilestone(readback.records, new Set(), wallet.address!, payload) !== null,
         invalidate: [["config"], ["sponsorMilestones"]],
       });
-      setCreatedId(findCreatedMilestone(result.readback, beforeIds, wallet.address, payload)?.id ?? null);
+      setCreatedId(findCreatedMilestone(result.readback.records, new Set(), wallet.address, payload)?.id ?? null);
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }
   return <main className="page-wrap narrow-page">
