@@ -32,6 +32,15 @@ class Milestone:
     created_at: u256
     status: str
     evidence_version: u256
+    review_round: u256
+    submitted_at: u256
+    last_reviewed_at: u256
+    commit_url: str
+    commit_sha: str
+    summary: str
+    result_vector: str
+    explanation: str
+    completed_at: u256
 
 
 class MilestoneCreated(gl.Event):
@@ -42,8 +51,13 @@ class MilestoneCancelled(gl.Event):
     def __init__(self, milestone_id: u256, /): ...
 
 
+class EvidenceSubmitted(gl.Event):
+    def __init__(self, milestone_id: u256, /, **blob): ...
+
+
 class GrantGate(gl.Contract):
     milestones: TreeMap[u256, Milestone]
+    used_commit_shas: TreeMap[u256, DynArray[str]]
     next_milestone_id: u256
 
     def __init__(self):
@@ -74,6 +88,56 @@ class GrantGate(gl.Contract):
         if token[0] in ".-" or token[-1] in ".-":
             raise gl.vm.UserError(f"invalid {label}")
         return token
+
+    def _parse_commit_url(self, milestone: Milestone, value: str) -> typing.Any:
+        prefix = (
+            f"https://github.com/{milestone.repo_owner}/"
+            f"{milestone.repo_name}/commit/"
+        )
+        if not value.startswith(prefix):
+            raise gl.vm.UserError("invalid canonical commit URL")
+        sha = value[len(prefix) :]
+        if len(sha) != 40:
+            raise gl.vm.UserError("invalid canonical commit URL")
+        if any(char not in "0123456789abcdef" for char in sha):
+            raise gl.vm.UserError("invalid canonical commit URL")
+        if value != prefix + sha:
+            raise gl.vm.UserError("invalid canonical commit URL")
+        return value, sha
+
+    def _record_evidence(
+        self, milestone: Milestone, commit_url: str, summary: str
+    ) -> None:
+        if gl.message.sender_address != milestone.builder:
+            raise gl.vm.UserError("only assigned builder may submit evidence")
+        now = self._now()
+        if now >= int(milestone.deadline):
+            raise gl.vm.UserError("milestone deadline passed")
+        clean_summary = summary.strip()
+        if len(clean_summary) < 20 or len(clean_summary) > 1000:
+            raise gl.vm.UserError("summary length must be 20-1000")
+        canonical_url, sha = self._parse_commit_url(milestone, commit_url.strip())
+        used = self.used_commit_shas.get_or_insert_default(milestone.id)
+        if sha in used:
+            raise gl.vm.UserError("commit already used for milestone")
+
+        used.append(sha)
+        milestone.evidence_version = u256(int(milestone.evidence_version) + 1)
+        milestone.review_round = u256(1)
+        milestone.submitted_at = u256(now)
+        milestone.last_reviewed_at = u256(now)
+        milestone.commit_url = canonical_url
+        milestone.commit_sha = sha
+        milestone.summary = clean_summary
+        milestone.result_vector = ""
+        milestone.explanation = ""
+        milestone.completed_at = u256(0)
+        milestone.status = UNRESOLVED
+        EvidenceSubmitted(
+            milestone.id,
+            evidence_version=int(milestone.evidence_version),
+            commit_sha=sha,
+        ).emit()
 
     @gl.public.write
     def create_milestone(
@@ -128,6 +192,15 @@ class GrantGate(gl.Contract):
             created_at=u256(now),
             status=OPEN,
             evidence_version=u256(0),
+            review_round=u256(0),
+            submitted_at=u256(0),
+            last_reviewed_at=u256(0),
+            commit_url="",
+            commit_sha="",
+            summary="",
+            result_vector="",
+            explanation="",
+            completed_at=u256(0),
         )
         MilestoneCreated(milestone_id).emit()
 
@@ -142,6 +215,26 @@ class GrantGate(gl.Contract):
             raise gl.vm.UserError("submitted milestone cannot be cancelled")
         milestone.status = CANCELLED
         MilestoneCancelled(u256(milestone_id)).emit()
+
+    @gl.public.write
+    def submit_evidence(
+        self, milestone_id: u256, commit_url: str, summary: str
+    ) -> None:
+        milestone = self._milestone_or_revert(milestone_id)
+        if milestone.status != OPEN or int(milestone.evidence_version) != 0:
+            raise gl.vm.UserError("first submission requires untouched open milestone")
+        self._record_evidence(milestone, commit_url, summary)
+
+    @gl.public.write
+    def resubmit_evidence(
+        self, milestone_id: u256, commit_url: str, summary: str
+    ) -> None:
+        milestone = self._milestone_or_revert(milestone_id)
+        if milestone.status != REJECTED:
+            raise gl.vm.UserError("resubmission requires rejected milestone")
+        if int(milestone.evidence_version) >= 3:
+            raise gl.vm.UserError("evidence version limit reached")
+        self._record_evidence(milestone, commit_url, summary)
 
     @gl.public.view
     def get_milestone(self, milestone_id: u256) -> typing.Any:
@@ -160,4 +253,13 @@ class GrantGate(gl.Contract):
             "created_at": int(milestone.created_at),
             "status": milestone.status,
             "evidence_version": int(milestone.evidence_version),
+            "review_round": int(milestone.review_round),
+            "submitted_at": int(milestone.submitted_at),
+            "last_reviewed_at": int(milestone.last_reviewed_at),
+            "commit_url": milestone.commit_url,
+            "commit_sha": milestone.commit_sha,
+            "summary": milestone.summary,
+            "result_vector": milestone.result_vector,
+            "explanation": milestone.explanation,
+            "completed_at": int(milestone.completed_at),
         }

@@ -43,7 +43,10 @@ class _StorageType:
 
 
 class TreeMap(_StorageType, dict):
-    pass
+    def get_or_insert_default(self, key: Any) -> "DynArray":
+        if key not in self:
+            self[key] = DynArray()
+        return self[key]
 
 
 class DynArray(_StorageType, list):
