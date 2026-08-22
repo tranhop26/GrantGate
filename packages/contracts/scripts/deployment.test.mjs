@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { contractAddressFromReceipt, createManifest, normalizePrivateKey } from "./deployment.mjs";
+import { assertSourceProvenance, contractAddressFromReceipt, createManifest, normalizePrivateKey } from "./deployment.mjs";
 
 test("normalizes a private key without ever returning its input in errors", () => {
   assert.equal(normalizePrivateKey("a".repeat(64)), `0x${"a".repeat(64)}`);
@@ -11,6 +11,11 @@ test("requires the finalized deploy receipt to contain a contract address", () =
   const address = "0x1111111111111111111111111111111111111111";
   assert.equal(contractAddressFromReceipt({ data: { contract_address: address } }), address);
   assert.throws(() => contractAddressFromReceipt({ data: {} }), /contract address/i);
+});
+
+test("refuses to associate dirty contract source with the HEAD commit", () => {
+  assert.doesNotThrow(() => assertSourceProvenance("same-blob", "same-blob"));
+  assert.throws(() => assertSourceProvenance("head-blob", "working-blob"), /does not match HEAD/i);
 });
 
 test("creates an auditable frozen deployment manifest", () => {

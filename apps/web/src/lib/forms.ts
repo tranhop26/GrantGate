@@ -1,4 +1,4 @@
-import { isCanonicalCommitUrl, splitCriteria } from "@grantgate/shared";
+import { isCanonicalCommitUrl, splitCriteria, type Milestone } from "@grantgate/shared";
 import { isAddress } from "./genlayer";
 
 export interface CreateMilestoneInput {
@@ -52,4 +52,24 @@ export function validateEvidence(
   const summary = input.summary.trim();
   if (summary.length < 20 || summary.length > 1000) throw new Error("Summary must be 20–1000 characters.");
   return { commitUrl, commitSha: commitUrl.slice(-40), summary };
+}
+
+export function findCreatedMilestone(
+  records: Milestone[],
+  beforeIds: ReadonlySet<number>,
+  sponsor: string,
+  payload: CreateMilestonePayload,
+): Milestone | null {
+  const matches = records.filter((record) =>
+    !beforeIds.has(record.id) &&
+    record.sponsor.toLowerCase() === sponsor.toLowerCase() &&
+    record.builder.toLowerCase() === payload.builder.toLowerCase() &&
+    record.title === payload.title &&
+    record.repo === `${payload.owner}/${payload.repo}` &&
+    record.deadline === payload.deadline &&
+    record.status === "OPEN" &&
+    record.evidenceVersion === 0 &&
+    record.criteria.length === payload.criteria.length &&
+    record.criteria.every((criterion, index) => criterion === payload.criteria[index]));
+  return matches.length === 1 ? matches[0] : null;
 }

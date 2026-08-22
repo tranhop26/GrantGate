@@ -14,6 +14,12 @@ export function contractAddressFromReceipt(receipt) {
   return candidate;
 }
 
+export function assertSourceProvenance(headBlob, workingBlob) {
+  if (!headBlob || headBlob !== workingBlob) {
+    throw new Error("packages/contracts/grantgate.py does not match HEAD; commit the exact source before deployment.");
+  }
+}
+
 export function explorerBase(network) {
   return network === "testnet-asimov" ? "https://explorer-asimov.genlayer.com" : "https://explorer-studio.genlayer.com";
 }

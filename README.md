@@ -9,12 +9,14 @@ The sponsor and builder cannot safely judge their own dispute. The contract is t
 - `OPEN` — criteria are frozen; sponsor may cancel and the assigned builder may submit.
 - `ACCEPTED` — every criterion is `MET`; the completion record and actor stats are finalized.
 - `REJECTED` — at least one criterion is `NOT_MET`; the builder may bind another commit within limits.
-- `UNRESOLVED` — evidence is missing, contradictory, malformed, or insufficient; the builder may resubmit or retry after cooldown.
+- `UNRESOLVED` — evidence is missing, contradictory, malformed, or insufficient; sponsor or builder may retry the same evidence after cooldown.
 - `CANCELLED` — sponsor cancelled before evidence; no later submission is allowed.
 
 Protocol consensus failure propagates without mutating state. Replay, wrong-role calls, invalid transitions, malformed inputs, exhausted retries, and late submissions are rejected by the contract.
 
-`packages/contracts/grantgate.py` is **INTENTIONALLY_FROZEN**: no owner, proxy, upgrade key, admin override, or replacement path is advertised. Recovery is deliberately limited to retry, resubmission, and cancellation while `OPEN`.
+`packages/contracts/grantgate.py` is **INTENTIONALLY_FROZEN**: no owner, proxy, upgrade key, admin override, or replacement path is advertised. Recovery is deliberately limited to same-evidence retry from `UNRESOLVED`, different-commit resubmission from `REJECTED`, and sponsor cancellation while `OPEN`.
+
+See [frozen recovery](docs/recovery.md) and the [live proof matrix](docs/proof-matrix.md).
 
 ## Architecture
 

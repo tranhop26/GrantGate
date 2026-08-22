@@ -9,6 +9,7 @@ import { WalletGate } from "@/components/WalletGate";
 import { useGrantGateTx, useMilestone } from "@/hooks/useGrantGate";
 import { reads, writes } from "@/lib/contract";
 import { validateEvidence } from "@/lib/forms";
+import { canCancel, canResubmit, canRetry, canSubmit } from "@/lib/permissions";
 import { useWallet } from "@/lib/wallet";
 
 const short = (value: string) => `${value.slice(0, 8)}…${value.slice(-6)}`;
@@ -71,14 +72,14 @@ export function MilestonePage() {
           <div className="record-main">
             <section><div className="section-heading"><span>Frozen criteria</span><span>{milestone.criteria.length} total</span></div><ol className="criteria-list">{milestone.criteria.map((criterion, index) => <li key={criterion}><p>{criterion}</p><span data-result={milestone.criteriaResults[index] ?? "AWAITING"}>{milestone.criteriaResults[index] ?? "AWAITING"}</span></li>)}</ol></section>
             {milestone.evidenceVersion > 0 && <section className="evidence-readback"><div className="section-heading"><span>Contract evidence readback</span><span>v{milestone.evidenceVersion}</span></div><a className="mono-link" href={milestone.commitUrl} target="_blank" rel="noreferrer">{milestone.commitSha} ↗</a><p>{milestone.summary}</p>{milestone.explanation && <blockquote>{milestone.explanation}</blockquote>}</section>}
-            {milestone.status === "UNRESOLVED" && <div className="notice notice-unresolved"><strong>Validators could not establish a safe answer.</strong><span>Review the explanation. The builder may resubmit a different commit, or retry this evidence after the on-chain cooldown.</span></div>}
+            {milestone.status === "UNRESOLVED" && <div className="notice notice-unresolved"><strong>Validators could not establish a safe answer.</strong><span>Review the explanation. The sponsor or builder may retry this same immutable evidence after the on-chain cooldown.</span></div>}
             {milestone.status === "ACCEPTED" && <div className="notice notice-success"><strong>All criteria were MET.</strong><span>This completion is finalized in the contract record.</span></div>}
             {(actionError || tx.error) && <div className="notice notice-error" role="alert">{actionError ?? String(tx.error)}</div>}
             <TxTimeline snapshot={tx.snapshot} />
             {tx.snapshot?.phase === "READBACK" && tx.snapshot.readback && <div className="notice notice-success"><strong>Authoritative readback: {tx.snapshot.readback.status}</strong><span>Evidence v{tx.snapshot.readback.evidenceVersion} · review {tx.snapshot.readback.reviewRound}</span></div>}
-            {wallet.address?.toLowerCase() === milestone.builder.toLowerCase() && ((milestone.status === "OPEN" && milestone.evidenceVersion === 0) || ["REJECTED", "UNRESOLVED"].includes(milestone.status)) && milestone.evidenceVersion < 3 && <form className="form-panel compact-form" onSubmit={(event) => void evidence(event)}><h2>{milestone.evidenceVersion === 0 ? "Submit immutable evidence" : "Bind a different commit"}</h2><label>Canonical commit URL<input value={commitUrl} onChange={(e) => setCommitUrl(e.target.value)} placeholder={`https://github.com/${milestone.repo}/commit/…`} /></label><label>Implementation summary<textarea rows={4} value={summary} onChange={(e) => setSummary(e.target.value)} /></label><button className="button button-acid" disabled={tx.isPending}>{tx.isPending ? "Consensus pending…" : milestone.evidenceVersion === 0 ? "Submit for validator review" : "Resubmit evidence"}</button></form>}
-            {wallet.address?.toLowerCase() === milestone.builder.toLowerCase() && milestone.status === "UNRESOLVED" && milestone.reviewRound < 3 && <button className="button" disabled={tx.isPending} onClick={() => void retry()}>Retry same evidence after cooldown</button>}
-            {wallet.address?.toLowerCase() === milestone.sponsor.toLowerCase() && milestone.status === "OPEN" && <button className="danger-link" disabled={tx.isPending} onClick={() => void cancel()}>Cancel open milestone</button>}
+            {(canSubmit(milestone, wallet.address) || canResubmit(milestone, wallet.address)) && <form className="form-panel compact-form" onSubmit={(event) => void evidence(event)}><h2>{milestone.evidenceVersion === 0 ? "Submit immutable evidence" : "Bind a different commit"}</h2><label>Canonical commit URL<input value={commitUrl} onChange={(e) => setCommitUrl(e.target.value)} placeholder={`https://github.com/${milestone.repo}/commit/…`} /></label><label>Implementation summary<textarea rows={4} value={summary} onChange={(e) => setSummary(e.target.value)} /></label><button className="button button-acid" disabled={tx.isPending}>{tx.isPending ? "Consensus pending…" : milestone.evidenceVersion === 0 ? "Submit for validator review" : "Resubmit evidence"}</button></form>}
+            {canRetry(milestone, wallet.address) && <button className="button" disabled={tx.isPending} onClick={() => void retry()}>Retry same evidence after cooldown</button>}
+            {canCancel(milestone, wallet.address) && <button className="danger-link" disabled={tx.isPending} onClick={() => void cancel()}>Cancel open milestone</button>}
           </div>
         </section>
       </>}

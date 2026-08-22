@@ -7,7 +7,7 @@ export function ArchitecturePage() {
       <article><span>03 · DECISION</span><h2>Validators inspect the work</h2><p>Each criterion becomes MET, NOT_MET, or INSUFFICIENT. The contract derives the milestone status.</p></article>
       <article><span>04 · CONSEQUENCE</span><h2>Chain records the outcome</h2><p>All MET becomes ACCEPTED. Any NOT_MET becomes REJECTED. Missing or contradictory evidence becomes UNRESOLVED.</p></article>
     </section>
-    <section className="unresolved-band"><div><span className="eyebrow"><span />SAFE FAILURE</span><h2>UNRESOLVED is a first-class outcome.</h2></div><p>It never masquerades as success. The builder may bind a different commit within the version limit, or retry the same evidence after cooldown. Consensus failure leaves contract state unchanged.</p></section>
+    <section className="unresolved-band"><div><span className="eyebrow"><span />SAFE FAILURE</span><h2>UNRESOLVED is a first-class outcome.</h2></div><p>It never masquerades as success. The sponsor or builder may retry the same immutable evidence after cooldown and within the review-round limit. Consensus failure leaves contract state unchanged.</p></section>
     <section className="frozen-band"><strong>INTENTIONALLY_FROZEN</strong><p>No owner, proxy, upgrade key, or admin override. Recovery is limited to explicit on-chain retry, resubmission, and sponsor cancellation while OPEN.</p></section>
   </main>;
 }

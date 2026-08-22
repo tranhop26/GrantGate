@@ -39,8 +39,11 @@ if (!execute) { console.log("Preflight only. Re-run with --execute only after ac
 
 const sponsorClient = createClient({ chain, account: sponsor });
 const builderClient = createClient({ chain, account: builder });
-await sponsorClient.initializeConsensusSmartContract();
-await builderClient.initializeConsensusSmartContract();
+for (const client of [sponsorClient, builderClient]) {
+  try { await client.initializeConsensusSmartContract(); } catch (cause) {
+    if (network !== "studionet") throw cause;
+  }
+}
 const asCalldataAddress = (hex) => new CalldataAddress(Uint8Array.from(hex.slice(2).match(/../g).map((byte) => Number.parseInt(byte, 16))));
 const wait = (client, hash) => client.waitForTransactionReceipt({ hash, status: TransactionStatus.FINALIZED, retries: 180, interval: 3000 });
 const successful = (receipt, label) => {
@@ -48,11 +51,22 @@ const successful = (receipt, label) => {
 };
 
 const configBefore = await sponsorClient.readContract({ address: contractAddress, functionName: "get_config", args: [] });
-const expectedId = Number(configBefore.milestone_count) + 1;
-const createHash = await sponsorClient.writeContract({ address: contractAddress, functionName: "create_milestone", args: ["Live proof: immutable GrantGate commit", asCalldataAddress(builder.address), match[1], match[2], criterion, Math.floor(Date.now() / 1000) + 7200], value: 0n });
+const countBefore = Number(configBefore.milestone_count);
+const title = "Live proof: immutable GrantGate commit";
+const deadline = Math.floor(Date.now() / 1000) + 7200;
+const createHash = await sponsorClient.writeContract({ address: contractAddress, functionName: "create_milestone", args: [title, asCalldataAddress(builder.address), match[1], match[2], criterion, deadline], value: 0n });
 successful(await wait(sponsorClient, createHash), "Milestone creation");
-const created = await sponsorClient.readContract({ address: contractAddress, functionName: "get_milestone", args: [expectedId] });
-if (Number(created?.id) !== expectedId || created?.status !== "OPEN") throw new Error("Create readback did not confirm the OPEN milestone.");
+const configAfter = await sponsorClient.readContract({ address: contractAddress, functionName: "get_config", args: [] });
+const countAfter = Number(configAfter.milestone_count);
+if (!Number.isSafeInteger(countAfter) || countAfter <= countBefore) throw new Error("Create readback did not advance the contract milestone count.");
+const candidates = [];
+for (let candidateId = countBefore + 1; candidateId <= countAfter; candidateId += 1) {
+  const record = await sponsorClient.readContract({ address: contractAddress, functionName: "get_milestone", args: [candidateId] });
+  if (record?.sponsor?.toLowerCase() === sponsor.address.toLowerCase() && record?.builder?.toLowerCase() === builder.address.toLowerCase() && record?.title === title && record?.repo === `${match[1]}/${match[2]}` && record?.criteria === criterion && Number(record?.deadline) === deadline && record?.status === "OPEN" && Number(record?.evidence_version) === 0) candidates.push(record);
+}
+if (candidates.length !== 1) throw new Error(`Create readback was ambiguous (${candidates.length} matching sponsor records).`);
+const created = candidates[0];
+const expectedId = Number(created.id);
 
 const submitHash = await builderClient.writeContract({ address: contractAddress, functionName: "submit_evidence", args: [expectedId, commitUrl, "Live integration evidence binds the advertised implementation to this immutable public commit."], value: 0n });
 successful(await wait(builderClient, submitHash), "Evidence submission");

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { validateCreateMilestone, validateEvidence } from "./forms";
+import type { Milestone } from "@grantgate/shared";
+import { findCreatedMilestone, validateCreateMilestone, validateEvidence } from "./forms";
 
 const validCreate = {
   title: "Ship signed release provenance",
@@ -31,5 +32,28 @@ describe("evidence form validation", () => {
       summary: "Implements the agreed release provenance checks and their tests.",
     }, "grantgate/example").commitSha).toBe("a".repeat(40));
     expect(() => validateEvidence({ commitUrl: "https://github.com/grantgate/example", summary: "short" }, "grantgate/example")).toThrow(/canonical/i);
+  });
+});
+
+describe("creation readback reconciliation", () => {
+  const payload = validateCreateMilestone(validCreate, 1_700_000_000);
+  const sponsor = "0x1111111111111111111111111111111111111111";
+  const record: Milestone = {
+    id: 8, sponsor, builder: payload.builder, title: payload.title,
+    repo: `${payload.owner}/${payload.repo}`, criteria: payload.criteria,
+    criteriaResults: [], deadline: payload.deadline, createdAt: 1_700_000_001,
+    status: "OPEN", evidenceVersion: 0, reviewRound: 0, submittedAt: 0,
+    lastReviewedAt: 0, commitUrl: "", commitSha: "", summary: "",
+    explanation: "", completedAt: 0,
+  };
+
+  it("ignores unrelated concurrent creations and returns the complete sponsor match", () => {
+    const unrelated: Milestone = { ...record, id: 7, sponsor: "0x3333333333333333333333333333333333333333" };
+    expect(findCreatedMilestone([unrelated, record], new Set([1, 2]), sponsor, payload)?.id).toBe(8);
+  });
+
+  it("fails closed when the readback is ambiguous or only contains an old record", () => {
+    expect(findCreatedMilestone([record, { ...record, id: 9 }], new Set(), sponsor, payload)).toBeNull();
+    expect(findCreatedMilestone([record], new Set([8]), sponsor, payload)).toBeNull();
   });
 });

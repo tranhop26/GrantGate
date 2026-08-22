@@ -1,36 +1,42 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import type { ContractConfig } from "@grantgate/shared";
+import type { Milestone } from "@grantgate/shared";
 import { ContractNotice } from "@/components/ContractNotice";
 import { TxTimeline } from "@/components/TxTimeline";
 import { WalletGate } from "@/components/WalletGate";
 import { useGrantGateTx } from "@/hooks/useGrantGate";
 import { reads, writes } from "@/lib/contract";
-import { validateCreateMilestone, type CreateMilestoneInput } from "@/lib/forms";
+import { findCreatedMilestone, validateCreateMilestone, type CreateMilestoneInput } from "@/lib/forms";
+import { useWallet } from "@/lib/wallet";
 
 const EMPTY: CreateMilestoneInput = { title: "", builder: "", repo: "", criteriaText: "", deadline: "" };
 
 export function CreateMilestonePage() {
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState<string | null>(null);
-  const tx = useGrantGateTx<ContractConfig>();
+  const [createdId, setCreatedId] = useState<number | null>(null);
+  const wallet = useWallet();
+  const tx = useGrantGateTx<Milestone[]>();
   const set = (key: keyof CreateMilestoneInput, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    setCreatedId(null);
     try {
       const payload = validateCreateMilestone(form);
-      const before = await reads.config();
-      await tx.mutateAsync({
+      if (!wallet.address) throw new Error("Connect a wallet first.");
+      const before = await reads.sponsorMilestones(wallet.address);
+      const beforeIds = new Set(before.map((record) => record.id));
+      const result = await tx.mutateAsync({
         send: (wallet) => writes.createMilestone(wallet, payload.title, payload.builder, payload.owner, payload.repo, payload.criteria, payload.deadline),
-        readback: reads.config,
-        verifyReadback: (config) => config.milestoneCount === before.milestoneCount + 1,
+        readback: () => reads.sponsorMilestones(wallet.address!),
+        verifyReadback: (records) => findCreatedMilestone(records, beforeIds, wallet.address!, payload) !== null,
         invalidate: [["config"], ["sponsorMilestones"]],
       });
+      setCreatedId(findCreatedMilestone(result.readback, beforeIds, wallet.address, payload)?.id ?? null);
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }
-  const createdId = tx.snapshot?.phase === "READBACK" ? tx.snapshot.readback?.milestoneCount : null;
   return <main className="page-wrap narrow-page">
     <header className="page-header"><div><span className="eyebrow"><span />SPONSOR ACTION</span><h1>Create milestone</h1><p>Freeze one repository, one builder, and up to five measurable criteria before evidence exists.</p></div></header>
     <ContractNotice />

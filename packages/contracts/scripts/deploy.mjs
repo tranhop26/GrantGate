@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createAccount, createClient } from "genlayer-js";
 import { studionet, testnetAsimov } from "genlayer-js/chains";
 import { ExecutionResult, TransactionStatus } from "genlayer-js/types";
-import { contractAddressFromReceipt, createManifest, normalizePrivateKey } from "./deployment.mjs";
+import { assertSourceProvenance, contractAddressFromReceipt, createManifest, normalizePrivateKey } from "./deployment.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..", "..", "..");
@@ -29,18 +29,34 @@ const account = createAccount(key);
 const code = readFileSync(contractPath, "utf8");
 const sourceSha256 = createHash("sha256").update(code).digest("hex");
 const gitCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+const headBlob = execFileSync("git", ["rev-parse", "HEAD:packages/contracts/grantgate.py"], { cwd: root, encoding: "utf8" }).trim();
+const workingBlob = execFileSync("git", ["hash-object", "packages/contracts/grantgate.py"], { cwd: root, encoding: "utf8" }).trim();
+assertSourceProvenance(headBlob, workingBlob);
 
 console.log(`Network: ${network} (chain ${chain.id})`);
 console.log(`Deployer: ${account.address}`);
 console.log(`Contract source SHA-256: ${sourceSha256}`);
 console.log(`Git commit: ${gitCommit}`);
+try {
+  const response = await fetch(chain.rpcUrls.default.http[0], { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getBalance", params: [account.address, "latest"] }), signal: AbortSignal.timeout(15_000) });
+  const body = await response.json();
+  const balance = BigInt(body?.result ?? "0x0");
+  console.log(`Deployer balance: ${balance} wei`);
+  if (network !== "studionet" && balance === 0n) throw new Error(`Deployer ${account.address} has no network balance.`);
+} catch (cause) {
+  if (network !== "studionet") throw cause;
+  console.warn("Studionet balance probe was unavailable; deployment submission remains authoritative.");
+}
 if (!execute) {
   console.log("Preflight only. Re-run with --execute only after action-time confirmation.");
   process.exit(0);
 }
 
 const client = createClient({ chain, account });
-await client.initializeConsensusSmartContract();
+try { await client.initializeConsensusSmartContract(); } catch (cause) {
+  if (network !== "studionet") throw cause;
+  console.warn("Studionet consensus initialization was not required; continuing to deployment.");
+}
 const transactionHash = await client.deployContract({ code, args: [] });
 console.log(`Deploy transaction: ${transactionHash}`);
 const receipt = await client.waitForTransactionReceipt({ hash: transactionHash, status: TransactionStatus.FINALIZED, retries: 180, interval: 3000 });
