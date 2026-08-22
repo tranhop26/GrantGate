@@ -18,6 +18,7 @@ CANCELLED = "CANCELLED"
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 MAX_RENDER_CHARS = 12000
 MAX_EXPLANATION_CHARS = 1000
+RETRY_COOLDOWN_SECONDS = 300
 
 
 @allow_storage
@@ -46,6 +47,16 @@ class Milestone:
     completed_at: u256
 
 
+@allow_storage
+@dataclass
+class ActorStats:
+    created: u256
+    assigned: u256
+    accepted: u256
+    rejected: u256
+    unresolved: u256
+
+
 class MilestoneCreated(gl.Event):
     def __init__(self, milestone_id: u256, /): ...
 
@@ -65,6 +76,9 @@ class MilestoneReviewed(gl.Event):
 class GrantGate(gl.Contract):
     milestones: TreeMap[u256, Milestone]
     used_commit_shas: TreeMap[u256, DynArray[str]]
+    sponsor_milestones: TreeMap[Address, DynArray[u256]]
+    builder_milestones: TreeMap[Address, DynArray[u256]]
+    actor_stats: TreeMap[Address, ActorStats]
     next_milestone_id: u256
 
     def __init__(self):
@@ -84,6 +98,43 @@ class GrantGate(gl.Contract):
         if milestone is None:
             raise gl.vm.UserError("milestone not found")
         return milestone
+
+    def _stats_or_create(self, address: Address) -> ActorStats:
+        stats = self.actor_stats.get(address)
+        if stats is None:
+            stats = ActorStats(
+                created=u256(0),
+                assigned=u256(0),
+                accepted=u256(0),
+                rejected=u256(0),
+                unresolved=u256(0),
+            )
+            self.actor_stats[address] = stats
+        return stats
+
+    def _adjust_outcome(self, milestone: Milestone, next_status: str) -> None:
+        sponsor_stats = self._stats_or_create(milestone.sponsor)
+        builder_stats = self._stats_or_create(milestone.builder)
+        previous = milestone.status
+        if previous == ACCEPTED:
+            sponsor_stats.accepted = u256(int(sponsor_stats.accepted) - 1)
+            builder_stats.accepted = u256(int(builder_stats.accepted) - 1)
+        elif previous == REJECTED:
+            sponsor_stats.rejected = u256(int(sponsor_stats.rejected) - 1)
+            builder_stats.rejected = u256(int(builder_stats.rejected) - 1)
+        elif previous == UNRESOLVED:
+            sponsor_stats.unresolved = u256(int(sponsor_stats.unresolved) - 1)
+            builder_stats.unresolved = u256(int(builder_stats.unresolved) - 1)
+
+        if next_status == ACCEPTED:
+            sponsor_stats.accepted = u256(int(sponsor_stats.accepted) + 1)
+            builder_stats.accepted = u256(int(builder_stats.accepted) + 1)
+        elif next_status == REJECTED:
+            sponsor_stats.rejected = u256(int(sponsor_stats.rejected) + 1)
+            builder_stats.rejected = u256(int(builder_stats.rejected) + 1)
+        elif next_status == UNRESOLVED:
+            sponsor_stats.unresolved = u256(int(sponsor_stats.unresolved) + 1)
+            builder_stats.unresolved = u256(int(builder_stats.unresolved) + 1)
 
     def _repo_token(self, value: str, label: str) -> str:
         token = value.strip().lower()
@@ -263,6 +314,7 @@ is not compared. An invalid answer is equivalent only to another invalid answer.
         milestone.result_vector = result_vector
         milestone.explanation = explanation
         milestone.completed_at = u256(now if status == ACCEPTED else 0)
+        self._adjust_outcome(milestone, status)
         milestone.status = status
         EvidenceSubmitted(
             milestone.id,
@@ -334,6 +386,12 @@ is not compared. An invalid answer is equivalent only to another invalid answer.
             explanation="",
             completed_at=u256(0),
         )
+        self.sponsor_milestones.get_or_insert_default(sponsor).append(milestone_id)
+        self.builder_milestones.get_or_insert_default(builder).append(milestone_id)
+        sponsor_stats = self._stats_or_create(sponsor)
+        builder_stats = self._stats_or_create(builder)
+        sponsor_stats.created = u256(int(sponsor_stats.created) + 1)
+        builder_stats.assigned = u256(int(builder_stats.assigned) + 1)
         MilestoneCreated(milestone_id).emit()
 
     @gl.public.write
@@ -368,11 +426,43 @@ is not compared. An invalid answer is equivalent only to another invalid answer.
             raise gl.vm.UserError("evidence version limit reached")
         self._record_evidence(milestone, commit_url, summary)
 
-    @gl.public.view
-    def get_milestone(self, milestone_id: u256) -> typing.Any:
-        milestone = self.milestones.get(u256(milestone_id))
-        if milestone is None:
-            return None
+    @gl.public.write
+    def retry_review(self, milestone_id: u256) -> None:
+        milestone = self._milestone_or_revert(milestone_id)
+        if milestone.status != UNRESOLVED:
+            raise gl.vm.UserError("retry requires unresolved milestone")
+        sender = gl.message.sender_address
+        if sender != milestone.sponsor and sender != milestone.builder:
+            raise gl.vm.UserError("only sponsor or builder may retry")
+        now = self._now()
+        if now >= int(milestone.deadline):
+            raise gl.vm.UserError("milestone deadline passed")
+        if int(milestone.review_round) >= 3:
+            raise gl.vm.UserError("review round limit reached")
+        if now - int(milestone.last_reviewed_at) < RETRY_COOLDOWN_SECONDS:
+            raise gl.vm.UserError("review retry cooldown active")
+
+        next_round = int(milestone.review_round) + 1
+        status, result_vector, explanation = self._judge(
+            milestone,
+            milestone.commit_url,
+            milestone.commit_sha,
+            milestone.summary,
+            int(milestone.evidence_version),
+            next_round,
+            int(milestone.submitted_at),
+        )
+
+        milestone.review_round = u256(next_round)
+        milestone.last_reviewed_at = u256(now)
+        milestone.result_vector = result_vector
+        milestone.explanation = explanation
+        milestone.completed_at = u256(now if status == ACCEPTED else 0)
+        self._adjust_outcome(milestone, status)
+        milestone.status = status
+        MilestoneReviewed(milestone.id, status=status).emit()
+
+    def _milestone_dict(self, milestone: Milestone) -> dict[str, typing.Any]:
         return {
             "id": int(milestone.id),
             "sponsor": milestone.sponsor.as_hex,
@@ -394,4 +484,77 @@ is not compared. An invalid answer is equivalent only to another invalid answer.
             "result_vector": milestone.result_vector,
             "explanation": milestone.explanation,
             "completed_at": int(milestone.completed_at),
+        }
+
+    def _milestone_page(
+        self, ids: typing.Any, offset: u256, limit: u256
+    ) -> list[typing.Any]:
+        page_limit = int(limit)
+        start = int(offset)
+        if page_limit < 1 or page_limit > 50:
+            raise gl.vm.UserError("page limit must be 1-50")
+        if start >= len(ids):
+            return []
+        end = min(len(ids), start + page_limit)
+        return [self._milestone_dict(self.milestones[ids[index]]) for index in range(start, end)]
+
+    @gl.public.view
+    def get_config(self) -> dict[str, typing.Any]:
+        return {
+            "classification": "INTENTIONALLY_FROZEN",
+            "schema_version": 1,
+            "milestone_count": int(self.next_milestone_id) - 1,
+            "retry_cooldown_seconds": RETRY_COOLDOWN_SECONDS,
+            "max_evidence_versions": 3,
+            "max_review_rounds": 3,
+        }
+
+    @gl.public.view
+    def get_milestone(self, milestone_id: u256) -> typing.Any:
+        milestone = self.milestones.get(u256(milestone_id))
+        if milestone is None:
+            return None
+        return self._milestone_dict(milestone)
+
+    @gl.public.view
+    def get_sponsor_milestone_count(self, address: Address) -> int:
+        return len(self.sponsor_milestones.get(address, []))
+
+    @gl.public.view
+    def get_builder_milestone_count(self, address: Address) -> int:
+        return len(self.builder_milestones.get(address, []))
+
+    @gl.public.view
+    def get_sponsor_milestones(
+        self, address: Address, offset: u256, limit: u256
+    ) -> list[typing.Any]:
+        return self._milestone_page(
+            self.sponsor_milestones.get(address, []), offset, limit
+        )
+
+    @gl.public.view
+    def get_builder_milestones(
+        self, address: Address, offset: u256, limit: u256
+    ) -> list[typing.Any]:
+        return self._milestone_page(
+            self.builder_milestones.get(address, []), offset, limit
+        )
+
+    @gl.public.view
+    def get_actor_stats(self, address: Address) -> dict[str, int]:
+        stats = self.actor_stats.get(address)
+        if stats is None:
+            return {
+                "created": 0,
+                "assigned": 0,
+                "accepted": 0,
+                "rejected": 0,
+                "unresolved": 0,
+            }
+        return {
+            "created": int(stats.created),
+            "assigned": int(stats.assigned),
+            "accepted": int(stats.accepted),
+            "rejected": int(stats.rejected),
+            "unresolved": int(stats.unresolved),
         }

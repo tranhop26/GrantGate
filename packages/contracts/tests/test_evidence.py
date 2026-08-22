@@ -1,4 +1,8 @@
+import json
+
 import pytest
+
+import genlayer as glstub
 
 
 CRITERIA = (
@@ -95,12 +99,17 @@ def test_submission_and_commit_sha_cannot_replay(
 ):
     create_open(contract, sponsor, builder, set_sender, set_time)
     set_sender(builder)
+    glstub.runtime.web_render = lambda url, _mode: (
+        f"open-labs/ledger commit {url.rsplit('/', 1)[-1]}"
+    )
+    glstub.runtime.exec_prompt = lambda _prompt: json.dumps(
+        {"items": ["NOT_MET", "MET"], "explanation": "One criterion is not met."}
+    )
     contract.submit_evidence(1, VALID_URL, VALID_SUMMARY)
 
     with pytest.raises(Exception, match="first submission"):
         contract.submit_evidence(1, VALID_URL, VALID_SUMMARY)
 
-    contract.milestones[1].status = "REJECTED"
     with pytest.raises(Exception, match="commit already used"):
         contract.resubmit_evidence(1, VALID_URL, VALID_SUMMARY)
     assert contract.get_milestone(1)["evidence_version"] == 1
@@ -111,10 +120,15 @@ def test_rejected_milestone_accepts_at_most_three_distinct_evidence_versions(
 ):
     create_open(contract, sponsor, builder, set_sender, set_time)
     set_sender(builder)
+    glstub.runtime.web_render = lambda url, _mode: (
+        f"open-labs/ledger commit {url.rsplit('/', 1)[-1]}"
+    )
+    glstub.runtime.exec_prompt = lambda _prompt: json.dumps(
+        {"items": ["NOT_MET", "MET"], "explanation": "One criterion is not met."}
+    )
     contract.submit_evidence(1, VALID_URL, VALID_SUMMARY)
 
     for version, sha in [(2, SHA_2), (3, "2123456789abcdef0123456789abcdef01234567")]:
-        contract.milestones[1].status = "REJECTED"
         contract.resubmit_evidence(
             1,
             f"https://github.com/open-labs/ledger/commit/{sha}",
@@ -122,7 +136,6 @@ def test_rejected_milestone_accepts_at_most_three_distinct_evidence_versions(
         )
         assert contract.get_milestone(1)["evidence_version"] == version
 
-    contract.milestones[1].status = "REJECTED"
     with pytest.raises(Exception, match="evidence version limit"):
         contract.resubmit_evidence(
             1,

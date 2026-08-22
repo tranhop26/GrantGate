@@ -111,7 +111,14 @@ def test_unavailable_or_identity_mismatched_render_fails_closed(
     contract.submit_evidence(1, URL, SUMMARY)
     assert contract.get_milestone(1)["status"] == "UNRESOLVED"
 
-    contract.milestones[1].status = "REJECTED"
+    glstub.runtime.web_render = lambda _url, _mode: f"open-labs/ledger commit {SHA}"
+    glstub.runtime.exec_prompt = lambda _prompt: json.dumps(
+        {"items": ["NOT_MET", "MET"], "explanation": "One criterion is not met."}
+    )
+    set_time(1_800_000_400)
+    contract.retry_review(1)
+    assert contract.get_milestone(1)["status"] == "REJECTED"
+
     second_sha = "1123456789abcdef0123456789abcdef01234567"
     glstub.runtime.web_render = lambda _url, _mode: "other/project commit deadbee"
     contract.resubmit_evidence(
