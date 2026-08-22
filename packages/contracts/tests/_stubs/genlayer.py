@@ -111,7 +111,7 @@ class _Nondet:
 
 class _EqPrinciple:
     @staticmethod
-    def prompt_comparative(principle: str, fn: Callable[[], str]) -> str:
+    def prompt_comparative(fn: Callable[[], str], principle: str) -> str:
         runtime.principles.append(principle)
         leader = fn()
         for _ in range(max(0, runtime.validator_runs - 1)):
@@ -155,7 +155,9 @@ class Runtime:
             {"items": ["MET"], "explanation": "The criterion is met."}
         )
         self.web_render: Callable[[str, str], str] = lambda url, _mode: url
-        self.equivalence: Callable[[str, str], bool] = lambda a, b: a == b
+        self.equivalence: Callable[[str, str], bool] = lambda a, b: (
+            json.loads(a).get("items") == json.loads(b).get("items")
+        )
 
 
 runtime = Runtime()

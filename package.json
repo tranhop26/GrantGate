@@ -11,7 +11,7 @@
     "test:contract": "pnpm --filter @grantgate/contracts test",
     "test:shared": "pnpm --filter @grantgate/shared test",
     "test:web": "pnpm --filter @grantgate/web test",
-    "lint:genvm": "uvx --from genvm-linter genvm-lint check packages/contracts/grantgate.py",
+    "lint:genvm": "genvm-lint check packages/contracts/grantgate.py",
     "deploy:contract": "node packages/contracts/scripts/deploy.mjs",
     "e2e:live": "node packages/contracts/scripts/e2e.mjs"
   },
