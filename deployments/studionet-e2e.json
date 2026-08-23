@@ -1,63 +1,48 @@
 {
   "network": "studionet",
   "contractAddress": "0xA6eE55C2214274474546d8259C893d4540742342",
-  "milestoneId": 6,
+  "milestoneId": 7,
   "create": {
     "actor": "0x829c5E873Fb7DdE8a9be3BE5Fd5DFA46D48fd603",
     "method": "create_milestone",
-    "transactionHash": "0x86f0cab34215f431a739a6b86401a20493947b9001e3ae8a0d106e11b81ceb99",
+    "transactionHash": "0xac28219ca720a0afbeaa846457d376bee633992408d23e09f8c6174e4486a4e7",
     "consensusStatus": "FINALIZED",
     "executionResult": "SUCCESS",
     "state": "OPEN",
     "readback": {
-      "id": 6,
+      "id": 7,
       "status": "OPEN"
     }
   },
   "submit": {
     "actor": "0xCD0064F7ab615C739B4890C895691b105B7428e0",
     "method": "submit_evidence",
-    "transactionHash": "0x271ac504c535c9cccfefde6ee7a3b911e1fb12a07d17a9c8bb49de26c0b1e16f",
+    "transactionHash": "0x49cc510fec57224390a8f42a1480f1f8e4a7ddc2745fdc7756a37cda7a9afdd9",
     "consensusStatus": "FINALIZED",
     "executionResult": "SUCCESS",
-    "state": "UNRESOLVED",
+    "state": "ACCEPTED",
     "readback": {
       "evidenceVersion": 1,
-      "commitSha": "e575e7c9c9ec78483c350a8a008bb3517e611a97",
-      "resultVector": "INSUFFICIENT"
+      "commitSha": "0d0bd774cad418e7b1430838bdcc2b0471a4bf5d",
+      "resultVector": "MET"
     }
   },
   "replay": {
     "actor": "0xCD0064F7ab615C739B4890C895691b105B7428e0",
     "method": "submit_evidence",
-    "transactionHash": "0x458d0871e0dafbb3c8f4406b55c18a4c0a973c2f5de05482a2cc68dabfe4dccd",
+    "transactionHash": "0xfc62b8c277b83e83c9c856c22614032ffd46be3f4c3ae77ae1cde38954514c8e",
     "consensusStatus": "FINALIZED",
     "executionResult": "ERROR",
     "state": "ERROR",
     "readback": {
-      "status": "UNRESOLVED",
+      "status": "ACCEPTED",
       "evidenceVersion": 1
     }
   },
-  "retry": {
-    "actor": "0x829c5E873Fb7DdE8a9be3BE5Fd5DFA46D48fd603",
-    "method": "retry_review",
-    "transactionHash": "0xd325591bdcf6fcaefce852b04e9cda25fc0b5b6c2cf0d513750fb716b2009863",
-    "consensusStatus": "FINALIZED",
-    "executionResult": "SUCCESS",
-    "state": "UNRESOLVED",
-    "readback": {
-      "reviewRound": 2,
-      "evidenceVersion": 1,
-      "resultVector": "INSUFFICIENT",
-      "explanation": "The rendered evidence did not match the bound repository and commit."
-    }
-  },
   "explorer": {
-    "create": "https://explorer-studio.genlayer.com/tx/0x86f0cab34215f431a739a6b86401a20493947b9001e3ae8a0d106e11b81ceb99",
-    "submit": "https://explorer-studio.genlayer.com/tx/0x271ac504c535c9cccfefde6ee7a3b911e1fb12a07d17a9c8bb49de26c0b1e16f",
-    "replay": "https://explorer-studio.genlayer.com/tx/0x458d0871e0dafbb3c8f4406b55c18a4c0a973c2f5de05482a2cc68dabfe4dccd",
-    "retry": "https://explorer-studio.genlayer.com/tx/0xd325591bdcf6fcaefce852b04e9cda25fc0b5b6c2cf0d513750fb716b2009863"
+    "create": "https://explorer-studio.genlayer.com/tx/0xac28219ca720a0afbeaa846457d376bee633992408d23e09f8c6174e4486a4e7",
+    "submit": "https://explorer-studio.genlayer.com/tx/0x49cc510fec57224390a8f42a1480f1f8e4a7ddc2745fdc7756a37cda7a9afdd9",
+    "replay": "https://explorer-studio.genlayer.com/tx/0xfc62b8c277b83e83c9c856c22614032ffd46be3f4c3ae77ae1cde38954514c8e"
   },
-  "verifiedAt": "2026-08-23T03:49:45.1928895Z"
+  "verifiedAt": "2026-08-23T04:01:41.380Z"
 }

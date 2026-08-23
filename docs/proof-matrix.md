@@ -11,3 +11,5 @@ Live hashes and readbacks are generated, not hand-written:
 | Sponsor or builder | Retry unresolved review | `retry_review` | `deployments/<network>-e2e.json:retry` | terminal decision | review round and same-evidence readback |
 
 The checked-in Studionet manifests instantiate this table with finalized transaction hashes, execution results, and authoritative readbacks.
+
+The current Studionet E2E manifest records milestone #7 reaching `ACCEPTED` with criterion vector `MET`; its repeated submission is finalized with GenVM execution `ERROR` and unchanged accepted readback.
