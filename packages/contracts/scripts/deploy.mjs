@@ -6,8 +6,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createAccount, createClient } from "genlayer-js";
 import { studionet, testnetAsimov } from "genlayer-js/chains";
-import { ExecutionResult, TransactionStatus } from "genlayer-js/types";
-import { assertSourceProvenance, contractAddressFromReceipt, createManifest, normalizePrivateKey } from "./deployment.mjs";
+import { TransactionStatus } from "genlayer-js/types";
+import { assertSourceProvenance, contractAddressFromReceipt, createManifest, normalizePrivateKey, transactionExecutionResult, waitForSuccessfulTransaction } from "./deployment.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..", "..", "..");
@@ -59,16 +59,14 @@ try { await client.initializeConsensusSmartContract(); } catch (cause) {
 }
 const transactionHash = await client.deployContract({ code, args: [] });
 console.log(`Deploy transaction: ${transactionHash}`);
-const receipt = await client.waitForTransactionReceipt({ hash: transactionHash, status: TransactionStatus.FINALIZED, retries: 180, interval: 3000 });
-if (receipt.txExecutionResultName !== ExecutionResult.FINISHED_WITH_RETURN) {
-  throw new Error(`Deployment finalized without successful execution (${receipt.txExecutionResultName ?? "UNKNOWN"}).`);
-}
+const receipt = await waitForSuccessfulTransaction(client, transactionHash, { status: TransactionStatus.FINALIZED, retries: 180, interval: 3000 }, "Deployment");
+const executionResult = transactionExecutionResult(await client.getTransaction({ hash: transactionHash }));
 const address = contractAddressFromReceipt(receipt);
 const readback = await client.readContract({ address, functionName: "get_config", args: [] });
 if (readback?.classification !== "INTENTIONALLY_FROZEN" || Number(readback?.schema_version) !== 1) {
   throw new Error("Deployed contract readback did not match the frozen GrantGate schema.");
 }
-const manifest = createManifest({ network, chainId: chain.id, address, deployer: account.address, transactionHash, sourceSha256, gitCommit, deployedAt: new Date().toISOString(), readback });
+const manifest = createManifest({ network, chainId: chain.id, address, deployer: account.address, transactionHash, consensusStatus: "FINALIZED", executionResult, sourceSha256, gitCommit, deployedAt: new Date().toISOString(), readback });
 const deploymentsDir = join(root, "deployments");
 mkdirSync(deploymentsDir, { recursive: true });
 const manifestPath = join(deploymentsDir, `${network}.json`);

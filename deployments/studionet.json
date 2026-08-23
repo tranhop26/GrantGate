@@ -1,0 +1,29 @@
+{
+  "project": "GrantGate",
+  "classification": "INTENTIONALLY_FROZEN",
+  "network": "studionet",
+  "chainId": 61999,
+  "address": "0xA6eE55C2214274474546d8259C893d4540742342",
+  "deployer": "0x21b45103dd05c43969daF3CbB4277391777e2eC7",
+  "transactionHash": "0xa4cb6ae9e7a3bdcde3acfc6a012c912b97125992ed77fbc1f50df94198d95e98",
+  "consensusStatus": "FINALIZED",
+  "executionResult": "SUCCESS",
+  "source": {
+    "path": "packages/contracts/grantgate.py",
+    "sha256": "8f8b38a95d6082807cd621594142420e25d0b9ead6b346a9ebaa2fb59498c393",
+    "gitCommit": "13d171e0b7919c997c294d58e3ada5420fe7e430"
+  },
+  "deployedAt": "2026-08-23T02:49:15.7730669Z",
+  "explorer": {
+    "contract": "https://explorer-studio.genlayer.com/address/0xA6eE55C2214274474546d8259C893d4540742342",
+    "transaction": "https://explorer-studio.genlayer.com/tx/0xa4cb6ae9e7a3bdcde3acfc6a012c912b97125992ed77fbc1f50df94198d95e98"
+  },
+  "readback": {
+    "classification": "INTENTIONALLY_FROZEN",
+    "max_evidence_versions": 3,
+    "max_review_rounds": 3,
+    "milestone_count": 0,
+    "retry_cooldown_seconds": 300,
+    "schema_version": 1
+  }
+}

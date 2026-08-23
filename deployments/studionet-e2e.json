@@ -1,0 +1,48 @@
+{
+  "network": "studionet",
+  "contractAddress": "0xA6eE55C2214274474546d8259C893d4540742342",
+  "milestoneId": 5,
+  "create": {
+    "actor": "0x829c5E873Fb7DdE8a9be3BE5Fd5DFA46D48fd603",
+    "method": "create_milestone",
+    "transactionHash": "0x93c31c714404fd671e35450ae18acb9011d2a44c9ec477f00aad7c5f9fef48b4",
+    "consensusStatus": "FINALIZED",
+    "executionResult": "SUCCESS",
+    "state": "OPEN",
+    "readback": {
+      "id": 5,
+      "status": "OPEN"
+    }
+  },
+  "submit": {
+    "actor": "0xCD0064F7ab615C739B4890C895691b105B7428e0",
+    "method": "submit_evidence",
+    "transactionHash": "0x6010ef0785ba5791425b030a1eb1d929ce0c5717594227676f31faa4913da68d",
+    "consensusStatus": "FINALIZED",
+    "executionResult": "SUCCESS",
+    "state": "UNRESOLVED",
+    "readback": {
+      "evidenceVersion": 1,
+      "commitSha": "13d171e0b7919c997c294d58e3ada5420fe7e430",
+      "resultVector": "INSUFFICIENT"
+    }
+  },
+  "replay": {
+    "actor": "0xCD0064F7ab615C739B4890C895691b105B7428e0",
+    "method": "submit_evidence",
+    "transactionHash": "0xa26e221e6d61475c7a42ae5fc4283552ed3d629bf6b59426bc0f829d7e16b48a",
+    "consensusStatus": "FINALIZED",
+    "executionResult": "ERROR",
+    "state": "ERROR",
+    "readback": {
+      "status": "UNRESOLVED",
+      "evidenceVersion": 1
+    }
+  },
+  "explorer": {
+    "create": "https://explorer-studio.genlayer.com/tx/0x93c31c714404fd671e35450ae18acb9011d2a44c9ec477f00aad7c5f9fef48b4",
+    "submit": "https://explorer-studio.genlayer.com/tx/0x6010ef0785ba5791425b030a1eb1d929ce0c5717594227676f31faa4913da68d",
+    "replay": "https://explorer-studio.genlayer.com/tx/0xa26e221e6d61475c7a42ae5fc4283552ed3d629bf6b59426bc0f829d7e16b48a"
+  },
+  "verifiedAt": "2026-08-23T03:29:16.399Z"
+}

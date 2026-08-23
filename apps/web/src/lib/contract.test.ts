@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const readContract = vi.hoisted(() => vi.fn());
+const waitForTransactionReceipt = vi.hoisted(() => vi.fn());
+const getTransaction = vi.hoisted(() => vi.fn());
 const writeContract = vi.hoisted(() =>
   vi.fn(async (call: { functionName: string; [key: string]: unknown }) => {
     void call;
@@ -10,7 +12,7 @@ const writeContract = vi.hoisted(() =>
 const ensureCorrectChain = vi.hoisted(() => vi.fn(async () => undefined));
 const ensureConsensus = vi.hoisted(() => vi.fn(async () => undefined));
 const signedClient = vi.hoisted(() => vi.fn(() => ({ writeContract })));
-const readClient = vi.hoisted(() => vi.fn(() => ({ readContract })));
+const readClient = vi.hoisted(() => vi.fn(() => ({ readContract, waitForTransactionReceipt, getTransaction })));
 
 vi.mock("./genlayer", () => ({
   CONTRACT_ADDRESS: "0x9999999999999999999999999999999999999999",
@@ -21,7 +23,7 @@ vi.mock("./genlayer", () => ({
   readClient,
 }));
 
-const { reads, writes } = await import("./contract");
+const { reads, waitFinalized, writes } = await import("./contract");
 
 const WALLET = {
   kind: "injected" as const,
@@ -89,5 +91,16 @@ describe("contract boundary", () => {
       "submit_evidence",
       "retry_review",
     ]);
+  });
+
+  it("maps the current Studionet leader execution result into the frontend receipt", async () => {
+    waitForTransactionReceipt.mockResolvedValue({ status: 7, statusName: "FINALIZED" });
+    getTransaction.mockResolvedValue({
+      consensus_data: { leader_receipt: [{ mode: "leader", execution_result: "SUCCESS" }] },
+    });
+    await expect(waitFinalized("0xhash")).resolves.toMatchObject({
+      statusName: "FINALIZED",
+      txExecutionResultName: "FINISHED_WITH_RETURN",
+    });
   });
 });

@@ -9,4 +9,4 @@ Live hashes and readbacks are generated, not hand-written:
 | Builder | Bind immutable commit | `submit_evidence` | `deployments/<network>-e2e.json:submit` | terminal decision | SHA, vector, explanation |
 | Builder | Replay consumed call | `submit_evidence` | `deployments/<network>-e2e.json:replay` | `ERROR` | prior version/status unchanged |
 
-This table remains intentionally incomplete until the generated manifests exist after confirmed live execution.
+The checked-in Studionet manifests instantiate this table with finalized transaction hashes, execution results, and authoritative readbacks.

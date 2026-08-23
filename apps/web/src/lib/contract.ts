@@ -7,7 +7,7 @@ import {
   type ContractConfig,
   type Milestone,
 } from "@grantgate/shared";
-import { CalldataAddress, TransactionStatus } from "genlayer-js/types";
+import { CalldataAddress, ExecutionResult, TransactionStatus } from "genlayer-js/types";
 import {
   CONTRACT_ADDRESS,
   CONTRACT_CONFIGURED,
@@ -135,10 +135,26 @@ export const writes = {
 
 export async function waitFinalized(hash: string) {
   requireConfigured();
-  return readClient().waitForTransactionReceipt({
+  const client = readClient();
+  const finalized = await client.waitForTransactionReceipt({
     hash: hash as never,
     status: TransactionStatus.FINALIZED,
     retries: 120,
     interval: 3000,
   });
+  if (finalized.txExecutionResultName) return finalized;
+  const transaction = await client.getTransaction({ hash: hash as never }) as unknown as {
+    consensus_data?: { leader_receipt?: Array<{ mode?: string; execution_result?: string }> };
+  };
+  const execution = transaction.consensus_data?.leader_receipt?.find(
+    (receipt) => receipt.mode === "leader",
+  )?.execution_result;
+  return {
+    ...finalized,
+    ...(execution === "SUCCESS"
+      ? { txExecutionResultName: ExecutionResult.FINISHED_WITH_RETURN }
+      : execution === "ERROR"
+        ? { txExecutionResultName: ExecutionResult.FINISHED_WITH_ERROR }
+        : {}),
+  };
 }
