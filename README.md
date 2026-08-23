@@ -16,7 +16,7 @@ Protocol consensus failure propagates without mutating state. Replay, wrong-role
 
 `packages/contracts/grantgate.py` is **INTENTIONALLY_FROZEN**: no owner, proxy, upgrade key, admin override, or replacement path is advertised. Recovery is deliberately limited to same-evidence retry from `UNRESOLVED`, different-commit resubmission from `REJECTED`, and sponsor cancellation while `OPEN`.
 
-See [frozen recovery](docs/recovery.md) and the [live proof matrix](docs/proof-matrix.md).
+See [frozen recovery](docs/recovery.md), the [live proof matrix](docs/proof-matrix.md), and the [fixed live evidence bundle](docs/live-evidence.md).
 
 Live deployment: [GrantGate on Vercel](https://grantgate.vercel.app), [Studionet contract](https://explorer-studio.genlayer.com/address/0xA6eE55C2214274474546d8259C893d4540742342), and [deployment transaction](https://explorer-studio.genlayer.com/tx/0xa4cb6ae9e7a3bdcde3acfc6a012c912b97125992ed77fbc1f50df94198d95e98). The checked-in manifests record the frozen source hash, deployment readback, live `UNRESOLVED` decision, and rejected replay.
 
