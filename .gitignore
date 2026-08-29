@@ -12,3 +12,4 @@ __pycache__/
 .vercel/
 work/
 deployments/*.local.json
+.worktrees/
