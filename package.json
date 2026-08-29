@@ -7,7 +7,7 @@
   "scripts": {
     "build": "pnpm --filter @grantgate/shared build && pnpm --filter @grantgate/web build",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm -r --sequential test",
+    "test": "pnpm --filter @grantgate/shared build && pnpm -r --sequential test",
     "test:contract": "pnpm --filter @grantgate/contracts test",
     "test:shared": "pnpm --filter @grantgate/shared test",
     "test:web": "pnpm --filter @grantgate/web test",
