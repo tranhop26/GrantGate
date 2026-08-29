@@ -33,7 +33,7 @@ export function HowToTry() {
             <span className="walkthrough-number" aria-hidden="true">02</span>
             <div>
               <h3>Try a write <span>MetaMask required</span></h3>
-              <p><strong>Prerequisite:</strong> use a MetaMask account funded on Studionet with simulated GEN. In <a href="https://studio.genlayer.com/contracts" target="_blank" rel="noreferrer">GenLayer Studio Contracts ↗</a>, use the account selector to choose a pre-funded Studionet account before connecting MetaMask.</p>
+              <p><strong>Prerequisite:</strong> use a MetaMask account funded on Studionet with simulated GEN. In <a href="https://studio.genlayer.com/contracts" target="_blank" rel="noreferrer">GenLayer Studio Contracts ↗</a>, use the account selector to transfer simulated GEN from a pre-funded Studionet account to the connected MetaMask address before starting the write trial.</p>
               <ol>
                 <li>Create a milestone as the sponsor and assign a builder address.</li>
                 <li>Switch MetaMask to the assigned builder account.</li>
