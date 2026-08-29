@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LiveProof } from "@/components/LiveProof";
 
 export function HomePage() {
   return (
@@ -21,6 +22,7 @@ export function HomePage() {
           <span><b>04</b> On-chain record</span>
         </div>
       </section>
+      <LiveProof />
       <section className="trust-grid" aria-labelledby="trust-title">
         <div>
           <div className="eyebrow">WHY GENLAYER</div>
