@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { HowToTry } from "@/components/HowToTry";
 import { LiveProof } from "@/components/LiveProof";
 
 export function HomePage() {
@@ -23,6 +24,7 @@ export function HomePage() {
         </div>
       </section>
       <LiveProof />
+      <HowToTry />
       <section className="trust-grid" aria-labelledby="trust-title">
         <div>
           <div className="eyebrow">WHY GENLAYER</div>
