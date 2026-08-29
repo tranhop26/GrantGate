@@ -29,6 +29,14 @@ export interface ExecuteTransactionOptions<T> {
   onState: (snapshot: TxSnapshot<T>) => void;
 }
 
+export function transactionErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/insufficient funds/i.test(message)) {
+    return "Fund this wallet with usable GEN on Studionet from the Accounts panel in GenLayer Studio, then retry.";
+  }
+  return message;
+}
+
 export async function executeTransaction<T>({
   send,
   waitFinalized,
@@ -59,7 +67,7 @@ export async function executeTransaction<T>({
     onState({ phase: "READBACK", hash, readback: value });
     return { hash, readback: value };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = transactionErrorMessage(error);
     onState({ phase: "ERROR", hash, error: message });
     throw error;
   }

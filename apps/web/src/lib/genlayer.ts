@@ -1,4 +1,4 @@
-import { createAccount, createClient, generatePrivateKey } from "genlayer-js";
+import { createClient } from "genlayer-js";
 import { studionet, testnetAsimov } from "genlayer-js/chains";
 import type { GenLayerChain, GenLayerClient } from "genlayer-js/types";
 
@@ -7,7 +7,7 @@ export const CONTRACT_ADDRESS = (import.meta.env.VITE_GRANTGATE_ADDRESS ??
 export const CONTRACT_CONFIGURED = /^0x[0-9a-fA-F]{40}$/.test(CONTRACT_ADDRESS);
 
 export type NetworkName = "studionet" | "testnet-asimov";
-export type WalletKind = "injected" | "guest";
+export type WalletKind = "injected";
 
 export const NETWORK: NetworkName =
   import.meta.env.VITE_GENLAYER_NETWORK === "testnet-asimov"
@@ -16,7 +16,6 @@ export const NETWORK: NetworkName =
 export const CHAIN: GenLayerChain =
   NETWORK === "testnet-asimov" ? testnetAsimov : studionet;
 
-const GUEST_KEY = "grantgate.guestKey";
 const clients = new Map<string, GenLayerClient<GenLayerChain>>();
 let consensusReady: Promise<void> | null = null;
 
@@ -24,37 +23,11 @@ export function isAddress(value: string | null | undefined): value is `0x${strin
   return typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value);
 }
 
-function guestPrivateKey(): `0x${string}` {
-  const existing = localStorage.getItem(GUEST_KEY);
-  if (existing && /^0x[0-9a-fA-F]{64}$/.test(existing)) {
-    return existing as `0x${string}`;
-  }
-  const generated = generatePrivateKey();
-  localStorage.setItem(GUEST_KEY, generated);
-  return generated;
-}
-
-export function clearGuestKey(): void {
-  localStorage.removeItem(GUEST_KEY);
-}
-
-export function guestAddress(): `0x${string}` {
-  return createAccount(guestPrivateKey()).address;
-}
-
-export function signedClient(
-  kind: WalletKind,
-  address: `0x${string}`,
-): GenLayerClient<GenLayerChain> {
-  const key = `${NETWORK}:${kind}:${address.toLowerCase()}`;
+export function signedClient(address: `0x${string}`): GenLayerClient<GenLayerChain> {
+  const key = `${NETWORK}:injected:${address.toLowerCase()}`;
   const cached = clients.get(key);
   if (cached) return cached;
-  const client = createClient({
-    chain: CHAIN,
-    ...(kind === "injected"
-      ? { account: address }
-      : { account: createAccount(guestPrivateKey()) }),
-  });
+  const client = createClient({ chain: CHAIN, account: address });
   clients.set(key, client);
   return client;
 }
@@ -129,8 +102,7 @@ export async function addGenLayerNetwork(): Promise<void> {
   }
 }
 
-export async function ensureCorrectChain(kind: WalletKind): Promise<void> {
-  if (kind !== "injected") return;
+export async function ensureCorrectChain(): Promise<void> {
   const provider = ethereumProvider();
   if (!provider) throw new Error("No browser wallet found");
   const raw = (await provider.request({ method: "eth_chainId" })) as string;

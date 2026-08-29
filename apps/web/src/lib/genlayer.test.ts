@@ -1,5 +1,17 @@
-import { describe, expect, it } from "vitest";
-import { isAddress, walletErrorMessage } from "./genlayer";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const createClient = vi.hoisted(() => vi.fn(() => ({})));
+
+vi.mock("genlayer-js", () => ({ createClient }));
+
+const { isAddress, resetClients, signedClient, walletErrorMessage } = await import(
+  "./genlayer"
+);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  resetClients();
+});
 
 describe("wallet boundary helpers", () => {
   it("validates full 20-byte addresses", () => {
@@ -11,5 +23,13 @@ describe("wallet boundary helpers", () => {
     expect(walletErrorMessage({ code: 4001 })).toContain("rejected");
     expect(walletErrorMessage({ code: -32002 })).toContain("pending");
     expect(walletErrorMessage(new Error("locked"))).toBe("locked");
+  });
+
+  it("creates signed clients for the injected address", () => {
+    const injectedAddress = "0x2222222222222222222222222222222222222222";
+    signedClient(injectedAddress);
+    expect(createClient).toHaveBeenCalledWith(
+      expect.objectContaining({ account: injectedAddress }),
+    );
   });
 });

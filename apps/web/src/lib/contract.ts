@@ -86,8 +86,8 @@ async function send(
   args: unknown[],
 ): Promise<string> {
   requireConfigured();
-  await ensureCorrectChain(wallet.kind);
-  const client = signedClient(wallet.kind, wallet.address);
+  await ensureCorrectChain();
+  const client = signedClient(wallet.address);
   await ensureConsensus(client);
   return (await client.writeContract({
     address: CONTRACT_ADDRESS,

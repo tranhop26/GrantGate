@@ -7,9 +7,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  NETWORK,
-  clearGuestKey,
-  guestAddress,
   requestInjectedAccount,
   resetClients,
   walletErrorMessage,
@@ -24,7 +21,6 @@ export interface WalletState {
   address: `0x${string}` | null;
   error: string | null;
   connectInjected: () => Promise<void>;
-  connectGuest: () => void;
   disconnect: () => void;
 }
 
@@ -53,27 +49,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const connectGuest = useCallback(() => {
-    if (NETWORK !== "studionet") {
-      setError("Guest wallet is available only on Studionet.");
-      setPhase("ERROR");
-      return;
-    }
-    resetClients();
-    setKind("guest");
-    setAddress(guestAddress());
-    setError(null);
-    setPhase("CONNECTED");
-  }, []);
-
   const disconnect = useCallback(() => {
-    if (kind === "guest") clearGuestKey();
     resetClients();
     setKind(null);
     setAddress(null);
     setError(null);
     setPhase("DISCONNECTED");
-  }, [kind]);
+  }, []);
 
   const value = useMemo<WalletState>(
     () => ({
@@ -82,10 +64,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       address,
       error,
       connectInjected,
-      connectGuest,
       disconnect,
     }),
-    [phase, kind, address, error, connectInjected, connectGuest, disconnect],
+    [phase, kind, address, error, connectInjected, disconnect],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

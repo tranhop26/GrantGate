@@ -69,7 +69,8 @@ describe("contract boundary", () => {
       ["The command exports a stable UTF-8 CSV with a documented header."],
       1_900_000_000,
     );
-    expect(ensureCorrectChain).toHaveBeenCalledWith("injected");
+    expect(ensureCorrectChain).toHaveBeenCalledWith();
+    expect(signedClient).toHaveBeenCalledWith(WALLET.address);
     expect(ensureConsensus).toHaveBeenCalled();
     expect(writeContract).toHaveBeenCalledWith(
       expect.objectContaining({

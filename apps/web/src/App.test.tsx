@@ -10,7 +10,6 @@ vi.mock("@/lib/wallet", () => ({
     address: null,
     error: null,
     connectInjected: vi.fn(),
-    connectGuest: vi.fn(),
     disconnect: vi.fn(),
   }),
 }));
@@ -41,6 +40,13 @@ describe("GrantGate first viewport", () => {
     renderRoute("/dashboard");
     expect(screen.getByRole("heading", { name: /connect to use the on-chain workspace/i })).toBeInTheDocument();
     expect(screen.getByText(/nothing is populated with sample milestones/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /guest/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/already holds GEN on Studionet/i)).toBeInTheDocument();
+    expect(screen.getByText(/account selector.*transfer simulated GEN.*pre-funded Studionet account/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open GenLayer Studio/i })).toHaveAttribute(
+      "href",
+      "https://studio.genlayer.com/contracts",
+    );
     expect(screen.queryByLabelText("Milestones")).not.toBeInTheDocument();
   });
 
