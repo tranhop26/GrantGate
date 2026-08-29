@@ -356,8 +356,10 @@ Use this helper in the `executeTransaction` catch branch before publishing the `
 
 ```tsx
 <p>Use a MetaMask account that already holds GEN on Studionet. For writes, fund it from the Accounts panel in GenLayer Studio before connecting.</p>
-<a href="https://studio.genlayer.com/accounts" target="_blank" rel="noreferrer">Open Studio Accounts ↗</a>
+<a href="https://studio.genlayer.com/contracts" target="_blank" rel="noreferrer">Open GenLayer Studio ↗</a>
 ```
+
+The adjacent copy must tell the user to open Studio's account selector and transfer simulated GEN from a pre-funded Studionet account; Studio does not expose a stable `/accounts` deep link.
 
 - [ ] **Step 7: Verify GREEN**
 
