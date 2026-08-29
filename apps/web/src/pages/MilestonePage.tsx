@@ -5,7 +5,6 @@ import { ContractNotice } from "@/components/ContractNotice";
 import { dateLabel } from "@/components/MilestoneCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TxTimeline } from "@/components/TxTimeline";
-import { WalletGate } from "@/components/WalletGate";
 import { useGrantGateTx, useMilestone } from "@/hooks/useGrantGate";
 import { reads, writes } from "@/lib/contract";
 import { validateEvidence } from "@/lib/forms";
@@ -62,8 +61,7 @@ export function MilestonePage() {
   if (id === null) return <main className="page-wrap"><div className="notice notice-error" role="alert">Invalid milestone id.</div></main>;
   return <main className="page-wrap detail-page">
     <ContractNotice />
-    <WalletGate>
-      {query.isLoading ? <div className="loading-state" role="status">Reading milestone #{id}…</div> : query.error ? <div className="notice notice-error" role="alert">{String(query.error)}</div> : !milestone ? <section className="empty-state"><h2>Milestone #{id} does not exist.</h2><Link to="/dashboard">Return to dashboard →</Link></section> : <>
+    {query.isLoading ? <div className="loading-state" role="status">Reading milestone #{id}…</div> : query.error ? <div className="notice notice-error" role="alert">{String(query.error)}</div> : !milestone ? <section className="empty-state"><h2>Milestone #{id} does not exist.</h2><Link to="/dashboard">Return to dashboard →</Link></section> : <>
         <header className="record-header"><div><span className="eyebrow"><span />MILESTONE #{String(id).padStart(3, "0")}</span><h1>{milestone.title}</h1></div><StatusBadge status={milestone.status} /></header>
         <section className="record-grid">
           <aside className="record-facts">
@@ -74,6 +72,7 @@ export function MilestonePage() {
             {milestone.evidenceVersion > 0 && <section className="evidence-readback"><div className="section-heading"><span>Contract evidence readback</span><span>v{milestone.evidenceVersion}</span></div><a className="mono-link" href={milestone.commitUrl} target="_blank" rel="noreferrer">{milestone.commitSha} ↗</a><p>{milestone.summary}</p>{milestone.explanation && <blockquote>{milestone.explanation}</blockquote>}</section>}
             {milestone.status === "UNRESOLVED" && <div className="notice notice-unresolved"><strong>Validators could not establish a safe answer.</strong><span>Review the explanation. The sponsor or builder may retry this same immutable evidence after the on-chain cooldown.</span></div>}
             {milestone.status === "ACCEPTED" && <div className="notice notice-success"><strong>All criteria were MET.</strong><span>This completion is finalized in the contract record.</span></div>}
+            {!wallet.address && <div className="notice"><strong>Read-only verification</strong><span>Connect MetaMask to perform authorized writes. This contract record is public without a wallet.</span></div>}
             {(actionError || tx.error) && <div className="notice notice-error" role="alert">{actionError ?? String(tx.error)}</div>}
             <TxTimeline snapshot={tx.snapshot} />
             {tx.snapshot?.phase === "READBACK" && tx.snapshot.readback && <div className="notice notice-success"><strong>Authoritative readback: {tx.snapshot.readback.status}</strong><span>Evidence v{tx.snapshot.readback.evidenceVersion} · review {tx.snapshot.readback.reviewRound}</span></div>}
@@ -83,6 +82,5 @@ export function MilestonePage() {
           </div>
         </section>
       </>}
-    </WalletGate>
   </main>;
 }
