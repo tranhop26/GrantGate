@@ -1,15 +1,15 @@
 # Live proof matrix
 
-Live hashes and readbacks are generated, not hand-written:
+| Explorer claim | Evidence type | Fixed proof | Verified outcome |
+|---|---|---|---|
+| Frozen Intelligent Contract | Source, live code, and deployment manifest | [`packages/contracts/grantgate.py`](../packages/contracts/grantgate.py), [`deployments/studionet.json`](../deployments/studionet.json), `gen_getContractCode` | Git blob `15d4632befd4025ff83f3738656a8d5be9f7387c`; committed LF-content SHA-256 `8f8b38a95d6082807cd621594142420e25d0b9ead6b346a9ebaa2fb59498c393`; raw CRLF live-code SHA-256 `0cb38ef34287c66d068812465e3d0c903c461038171afb91519df8a4d5b6b002`; newline-normalized contents match; classification `INTENTIONALLY_FROZEN` |
+| Studionet deployment | Explorer transaction and schema | [Deploy transaction](https://explorer-studio.genlayer.com/tx/0xa4cb6ae9e7a3bdcde3acfc6a012c912b97125992ed77fbc1f50df94198d95e98), [contract](https://explorer-studio.genlayer.com/address/0xA6eE55C2214274474546d8259C893d4540742342) | `FINALIZED`; GenVM `SUCCESS`; consensus `Accepted`; schema exposes 12 methods (7 view, 5 write) |
+| Criteria are frozen; evidence is versioned | Contract source, milestone readback, tests | `get_milestone(7)`, contract test suite | Repository, builder, deadline, and criteria cannot change; the current canonical commit URL, full SHA, and summary are authoritative for evidence version `1`, while a rejected result may be resubmitted within the version limit |
+| Validator evidence assessment | Successful review transaction | [`0x49cc510f…7a9afdd9`](https://explorer-studio.genlayer.com/tx/0x49cc510fec57224390a8f42a1480f1f8e4a7ddc2745fdc7756a37cda7a9afdd9) | `FINALIZED`; GenVM `SUCCESS`; consensus `Accepted`; milestone #7 is `ACCEPTED` with vector `MET` and a stored explanation |
+| Replay protection | Failed repeated submission plus readback | [`0xfc62b8c2…54514c8e`](https://explorer-studio.genlayer.com/tx/0xfc62b8c277b83e83c9c856c22614032ffd46be3f4c3ae77ae1cde38954514c8e), `get_milestone(7)` | `FINALIZED`; GenVM `ERROR`; consensus `Accepted`; state remains `ACCEPTED` at evidence version `1` and review round `1` |
+| Fail-safe uncertainty | Milestone readbacks and manifests | `get_milestone(3..6)`, [`deployments/studionet-e2e.json`](../deployments/studionet-e2e.json) | Missing or renderer-incompatible proof remains `UNRESOLVED` with `INSUFFICIENT`, never favorable by default |
+| Wallet-free public verification | Production UI and component/page tests | [`https://grantgate.vercel.app`](https://grantgate.vercel.app), [`/milestones/7`](https://grantgate.vercel.app/milestones/7) | Anonymous desktop/mobile checks load `ACCEPTED`, `MET`, explanation, and commit evidence without requesting a wallet |
+| Injected-wallet-only writes | Frontend source and tests | `apps/web/src/lib/wallet.tsx`, wallet and transaction tests | No browser-generated private key or guest-wallet route remains; writes require MetaMask and explain simulated Studionet GEN funding |
+| Reproducible release | GitHub, Vercel, repository checks | [Release commit `e9e5d87`](https://github.com/tranhop26/GrantGate/commit/e9e5d873fd383751174c7dbb508097c4d6180907), Vercel `dpl_GsSJTWGF3rSuVK3cWPshzkqaKVoc` | 113 tests, lint, GenVM lint, typecheck, and build pass; production routes pass desktop/mobile and direct-refresh checks with no console errors |
 
-| Actor | Action | Method | Transaction | State | Readback source |
-|---|---|---|---|---|---|
-| Deployer | Deploy frozen source | deploy | `deployments/<network>.json` | `FINALIZED` | `get_config` |
-| Sponsor | Freeze milestone | `create_milestone` | `deployments/<network>-e2e.json:create` | `OPEN` | `get_milestone` |
-| Builder | Bind immutable commit | `submit_evidence` | `deployments/<network>-e2e.json:submit` | terminal decision | SHA, vector, explanation |
-| Builder | Replay consumed call | `submit_evidence` | `deployments/<network>-e2e.json:replay` | `ERROR` | prior version/status unchanged |
-| Sponsor or builder | Retry unresolved review | `retry_review` | `deployments/<network>-e2e.json:retry` | terminal decision | review round and same-evidence readback |
-
-The checked-in Studionet manifests instantiate this table with finalized transaction hashes, execution results, and authoritative readbacks.
-
-The current Studionet E2E manifest records milestone #7 reaching `ACCEPTED` with criterion vector `MET`; its repeated submission is finalized with GenVM execution `ERROR` and unchanged accepted readback.
+The production bundle retains the documented Vite advisory warning at 775.91 kB minified. This does not alter contract execution or authoritative readbacks and remains future code-splitting work.
