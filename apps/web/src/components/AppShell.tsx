@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="site-shell">
       <header className="topbar">
         <Link className="brand" to="/" aria-label="GrantGate home">
-          <span className="brand-mark">GG</span>
+          <img className="brand-mark" src="/grantgate-logo.svg" alt="" />
           <span>GRANTGATE</span>
         </Link>
         <nav aria-label="Primary navigation">

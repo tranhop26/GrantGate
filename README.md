@@ -2,6 +2,8 @@
 
 GrantGate is a GenLayer MVP for software-grant milestones. A sponsor freezes a public GitHub repository, builder, deadline, and measurable criteria. The builder binds one immutable commit. GenLayer validators inspect that commit and the Intelligent Contract records `ACCEPTED`, `REJECTED`, or `UNRESOLVED`.
 
+GrantGate is **Preview on Studionet**. Studionet GEN is simulated value, not production settlement.
+
 The sponsor and builder cannot safely judge their own dispute. The contract is the source of truth: the frontend only submits calls and renders contract readback. There is no escrow or token custody in this MVP.
 
 ## Trust and state
@@ -40,11 +42,13 @@ Requirements: Node 22+, pnpm 10.18.2, Python 3.12+, `pytest`, and `genvm-linter`
 
 ```bash
 pnpm install --frozen-lockfile
-copy .env.example .env
-pnpm lint
 pnpm test
+pnpm lint
+pnpm typecheck
 pnpm build
 ```
+
+`pnpm test` builds the shared package first, then runs every workspace test suite sequentially. To run the app, copy `.env.example` to `.env` and set the public contract configuration; tests do not require private keys.
 
 Environment variables:
 
@@ -71,9 +75,17 @@ The deploy script waits for `FINALIZED`, requires successful execution, reads `g
 
 ## Use
 
-1. Connect an injected wallet or a local Studionet guest wallet.
+### Verify live proof — no wallet required
+
+1. Open [milestone #7](https://grantgate.vercel.app/milestones/7).
+2. Confirm `ACCEPTED`, criterion result `MET`, the validator explanation, and the immutable commit SHA.
+3. Open the linked successful review and rejected replay transactions. The replay fails while the accepted readback remains unchanged at evidence version 1.
+
+### Try a write — funded injected wallet required
+
+1. Connect MetaMask or another injected wallet that is funded on Studionet. In [GenLayer Studio Accounts](https://studio.genlayer.com/contracts), use the account selector to transfer simulated GEN from a pre-funded Studionet account to the connected wallet address. Do not use a faucet.
 2. As sponsor, create a milestone with lowercase `owner/repo`, a builder address, 1–5 criteria, and a future deadline.
-3. As that builder, submit a canonical URL containing a full lowercase 40-character commit SHA.
+3. Switch the injected wallet to that assigned builder, then submit a canonical URL containing a full lowercase 40-character commit SHA.
 4. Wait through signing, pending, finalized, execution success, and readback; inspect the criterion vector and terminal status.
 
 ## Evidence map
@@ -90,3 +102,4 @@ The deploy script waits for `FINALIZED`, requires successful execution, reads `g
 - One repository and up to five criteria per milestone; three evidence versions and three review rounds.
 - No payments, escrow, appeals, or upgrade path.
 - Validator web access can produce `UNRESOLVED`; it is a safe terminal decision with bounded recovery, not hidden success.
+- The public showcase is fixed to verified milestone #7; other milestone ids are not promoted as review evidence.
