@@ -77,9 +77,9 @@ The deploy script waits for `FINALIZED`, requires successful execution, reads `g
 
 ### Verify live proof — no wallet required
 
-1. Open [milestone #7](https://grantgate.vercel.app/milestones/7).
-2. Confirm `ACCEPTED`, criterion result `MET`, the validator explanation, and the immutable commit SHA.
-3. Open the linked successful review and rejected replay transactions. The replay fails while the accepted readback remains unchanged at evidence version 1.
+1. Open the public proof gallery on [GrantGate](https://grantgate.vercel.app).
+2. Confirm milestone #7 is `ACCEPTED` with criterion result `MET`, then confirm milestone #3 is `UNRESOLVED` with `INSUFFICIENT` evidence. Both cards are contract readbacks, not fixtures.
+3. Open milestone #7 and the linked successful review and rejected replay transactions. The replay fails while the accepted readback remains unchanged at evidence version 1.
 
 ### Try a write — funded injected wallet required
 
@@ -102,4 +102,4 @@ The deploy script waits for `FINALIZED`, requires successful execution, reads `g
 - One repository and up to five criteria per milestone; three evidence versions and three review rounds.
 - No payments, escrow, appeals, or upgrade path.
 - Validator web access can produce `UNRESOLVED`; it is a safe terminal decision with bounded recovery, not hidden success.
-- The public showcase is fixed to verified milestone #7; other milestone ids are not promoted as review evidence.
+- The public showcase is deliberately limited to verified milestone #7 and fail-safe milestone #3; arbitrary milestone ids are not promoted as review evidence.
