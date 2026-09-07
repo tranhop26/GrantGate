@@ -56,15 +56,28 @@ h1 { max-width: 1040px; margin: 26px 0 24px; font-size: clamp(3rem, 8.2vw, 8.6re
 .live-proof > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 28px; }
 .live-proof .eyebrow span { border-color: var(--acid); }
 .live-proof h2 { max-width: 620px; margin: 20px 0 0; font-size: clamp(2.4rem, 5vw, 5.5rem); line-height: .94; letter-spacing: -.065em; }
+.live-proof > header p { max-width: 620px; color: #d6d2c9; line-height: 1.6; }
 .preview-chip { flex: 0 0 auto; padding: 8px 10px; border: 1px solid var(--acid); color: var(--acid); font: 500 .68rem "DM Mono", monospace; letter-spacing: .06em; }
-.live-proof-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 44px; border: 1px solid var(--paper); }
-.live-proof-grid article { display: flex; flex-direction: column; align-items: flex-start; min-height: 220px; padding: 24px; border-right: 1px solid var(--paper); }
-.live-proof-grid article:last-child { border-right: 0; }
-.live-proof-grid article > span { font: 500 .68rem "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
-.live-proof-grid strong { margin-top: 42px; color: var(--acid); font-size: 2.5rem; letter-spacing: -.06em; }
-.live-proof-grid .status-badge { margin-top: 35px; }
-.live-proof-grid p { margin: auto 0 0; color: #d6d2c9; line-height: 1.6; }
-.live-proof .button-row a:not(.button) { align-self: center; color: var(--paper); font-weight: 800; text-underline-offset: 4px; }
+.proof-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 14px; }
+.live-proof .button-ghost { border-color: rgba(243,240,232,.55); background: transparent; color: var(--paper); box-shadow: none; }
+.live-proof .button-ghost:disabled { cursor: progress; opacity: .65; }
+.proof-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-top: 44px; border: 1px solid var(--paper); background: rgba(243,240,232,.45); }
+.proof-card { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; min-height: 390px; padding: 26px; background: var(--ink); }
+.proof-card h3 { margin: 28px 0 0; font-size: clamp(1.45rem, 2.3vw, 2.35rem); line-height: 1; letter-spacing: -.045em; }
+.proof-card > p { color: #d6d2c9; line-height: 1.65; }
+.proof-card-decision { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 28px; }
+.proof-card-decision strong { color: var(--acid); font: 500 .78rem "DM Mono", monospace; }
+.proof-card dl { display: grid; width: 100%; gap: 8px; margin: auto 0 22px; }
+.proof-card dl div { display: flex; justify-content: space-between; gap: 14px; padding-top: 10px; border-top: 1px solid rgba(243,240,232,.2); }
+.proof-card dt, .proof-card dd { margin: 0; font: 500 .67rem "DM Mono", monospace; }
+.proof-card dt { color: #aaa69d; text-transform: uppercase; }
+.proof-card dd { overflow-wrap: anywhere; text-align: right; }
+.proof-card-links { display: flex; flex-wrap: wrap; gap: 14px; }
+.proof-card a, .proof-footer a { color: var(--paper); font-weight: 800; text-underline-offset: 4px; }
+.proof-card-state { justify-content: center; min-height: 260px; }
+.proof-card-state p { margin-top: 20px; }
+.proof-card-mismatch { border-top: 5px solid var(--amber); }
+.proof-footer { display: flex; justify-content: space-between; gap: 24px; margin-top: 24px; color: #d6d2c9; font-size: .8rem; }
 .live-proof .loading-state, .live-proof .empty-state { border-color: var(--paper); background: transparent; }
 
 .how-to-try { padding: 72px 7vw; border-bottom: 1px solid var(--line); }
@@ -183,11 +196,11 @@ footer { margin-top: auto; display: flex; justify-content: space-between; gap: 2
   .proof-strip span:nth-child(-n+2) { border-bottom: 1px solid var(--ink); }
   .live-proof { padding-inline: 5vw; }
   .live-proof > header { flex-direction: column; }
-  .live-proof-grid { grid-template-columns: 1fr; }
-  .live-proof-grid article { min-height: 0; border-right: 0; border-bottom: 1px solid var(--paper); }
-  .live-proof-grid article:last-child { border-bottom: 0; }
-  .live-proof-grid strong, .live-proof-grid .status-badge { margin-top: 24px; }
-  .live-proof-grid p { margin-top: 26px; }
+  .proof-header-actions { align-items: flex-start; }
+  .proof-gallery { grid-template-columns: 1fr; }
+  .proof-card { min-height: 0; }
+  .proof-card dl { margin-top: 28px; }
+  .proof-footer { flex-direction: column; }
   .how-to-try { padding-inline: 5vw; }
   .how-to-try-header { align-items: flex-start; flex-direction: column; }
   .walkthrough-list { grid-template-columns: 1fr; }
