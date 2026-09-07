@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2026-09-07 — Public Proof & Performance
 
 - Expanded the wallet-free home-page proof gallery with verified `ACCEPTED`, fail-safe `UNRESOLVED`, and rejected replay outcomes.
 - Added strict expected/readback matching so stale or mismatched RPC data fails closed instead of displaying an expected status.
