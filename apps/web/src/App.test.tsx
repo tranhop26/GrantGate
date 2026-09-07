@@ -22,11 +22,17 @@ function renderRoute(path: string) {
 }
 
 describe("GrantGate first viewport", () => {
-  it("explains the trust decision and offers a wallet connection", () => {
+  it("shows a stable route fallback while the first page chunk loads", () => {
+    renderRoute("/");
+
+    expect(screen.getByRole("status", { name: /loading page/i })).toBeInTheDocument();
+  });
+
+  it("explains the trust decision and offers a wallet connection", async () => {
     renderRoute("/");
 
     expect(
-      screen.getByRole("heading", { name: /software milestones deserve proof/i }),
+      await screen.findByRole("heading", { name: /software milestones deserve proof/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/validators inspect the immutable commit/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
@@ -36,9 +42,9 @@ describe("GrantGate first viewport", () => {
     );
   });
 
-  it("does not invent dashboard records before a wallet is connected", () => {
+  it("does not invent dashboard records before a wallet is connected", async () => {
     renderRoute("/dashboard");
-    expect(screen.getByRole("heading", { name: /connect to use the on-chain workspace/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /connect to use the on-chain workspace/i })).toBeInTheDocument();
     expect(screen.getByText(/nothing is populated with sample milestones/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /guest/i })).not.toBeInTheDocument();
     expect(screen.getByText(/already holds GEN on Studionet/i)).toBeInTheDocument();
@@ -50,9 +56,9 @@ describe("GrantGate first viewport", () => {
     expect(screen.queryByLabelText("Milestones")).not.toBeInTheDocument();
   });
 
-  it("documents UNRESOLVED and frozen recovery boundaries", () => {
+  it("documents UNRESOLVED and frozen recovery boundaries", async () => {
     renderRoute("/architecture");
-    expect(screen.getByRole("heading", { name: /unresolved is a first-class outcome/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /unresolved is a first-class outcome/i })).toBeInTheDocument();
     expect(screen.getByText(/no owner, proxy, upgrade key, or admin override/i)).toBeInTheDocument();
   });
 });

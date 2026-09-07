@@ -72,4 +72,26 @@ describe("WalletProvider", () => {
     expect(screen.getByLabelText("wallet error")).toHaveTextContent("Connection rejected");
     expect(screen.getByLabelText("wallet address")).toHaveTextContent("none");
   });
+
+  it("disconnects locally even when the deferred client reset fails", async () => {
+    const user = userEvent.setup();
+    requestInjectedAccount.mockResolvedValueOnce(
+      "0x7777777777777777777777777777777777777777",
+    );
+    resetClients
+      .mockImplementationOnce(() => undefined)
+      .mockImplementationOnce(() => {
+        throw new Error("reset failed");
+      });
+
+    setup();
+    await user.click(screen.getByRole("button", { name: "Injected" }));
+    expect(screen.getByLabelText("wallet phase")).toHaveTextContent("CONNECTED");
+
+    await user.click(screen.getByRole("button", { name: "Disconnect" }));
+
+    expect(screen.getByLabelText("wallet phase")).toHaveTextContent("DISCONNECTED");
+    expect(screen.getByLabelText("wallet kind")).toHaveTextContent("none");
+    expect(screen.getByLabelText("wallet address")).toHaveTextContent("none");
+  });
 });

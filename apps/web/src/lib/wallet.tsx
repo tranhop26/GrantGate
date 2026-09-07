@@ -6,12 +6,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  requestInjectedAccount,
-  resetClients,
-  walletErrorMessage,
-  type WalletKind,
-} from "./genlayer";
+type WalletKind = "injected";
+
+function fallbackWalletErrorMessage(error: unknown): string {
+  const message = (error as { message?: unknown } | null)?.message;
+  return typeof message === "string" && message.trim()
+    ? message
+    : "Could not connect to your wallet.";
+}
 
 export type WalletPhase = "DISCONNECTED" | "CONNECTING" | "CONNECTED" | "ERROR";
 
@@ -35,7 +37,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const connectInjected = useCallback(async () => {
     setPhase("CONNECTING");
     setError(null);
+    let describeError = fallbackWalletErrorMessage;
     try {
+      const { requestInjectedAccount, resetClients, walletErrorMessage } = await import(
+        "./genlayer"
+      );
+      describeError = walletErrorMessage;
       const nextAddress = await requestInjectedAccount();
       resetClients();
       setKind("injected");
@@ -44,17 +51,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       setKind(null);
       setAddress(null);
-      setError(walletErrorMessage(cause));
+      setError(describeError(cause));
       setPhase("ERROR");
     }
   }, []);
 
   const disconnect = useCallback(() => {
-    resetClients();
     setKind(null);
     setAddress(null);
     setError(null);
     setPhase("DISCONNECTED");
+    void import("./genlayer")
+      .then(({ resetClients }) => resetClients())
+      .catch(() => undefined);
   }, []);
 
   const value = useMemo<WalletState>(
